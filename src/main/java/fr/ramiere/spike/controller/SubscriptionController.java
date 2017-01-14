@@ -118,7 +118,7 @@ public class SubscriptionController {
                 .groupName("subscriptions")
                 .apiInfo(new ApiInfoBuilder()
                         .title("Subscription")
-                        .version("2.0")
+                        .version("1.0")
                         .build())
                 .select()
                 .paths(regex("/subscriptions/.*"))

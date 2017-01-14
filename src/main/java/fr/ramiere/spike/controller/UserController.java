@@ -94,15 +94,15 @@ public class UserController {
     }
 
     @Bean
-    public Docket subscriptionApi() {
+    public Docket userApi() {
         return new Docket(SWAGGER_2)
-                .groupName("user")
+                .groupName("users")
                 .apiInfo(new ApiInfoBuilder()
-                        .title("User")
-                        .version("2.0")
+                        .title("Users")
+                        .version("1.0")
                         .build())
                 .select()
-                .paths(regex("/user/.*"))
+                .paths(regex("/users/.*"))
                 .build();
     }
 
