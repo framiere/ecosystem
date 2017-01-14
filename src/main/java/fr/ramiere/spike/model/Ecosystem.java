@@ -10,7 +10,7 @@ import static javax.persistence.CascadeType.PERSIST;
 import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "ecosystem")
-@Builder(builderMethodName = "ecosystem")
+@Builder(builderMethodName = "ecosystem", toBuilder = true)
 @NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 public class Ecosystem implements Identifiable<Long> {

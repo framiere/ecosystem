@@ -8,9 +8,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static fr.ramiere.spike.model.User.user;
 
 @Service
 @AllArgsConstructor
@@ -47,10 +50,17 @@ public class SetupDatabase {
         subscriptionRepository.save(Arrays.asList(activeSubscription, inactiveSubscription));
     }
 
+    private final Random random = new Random();
+
     private Set<User> users() {
         return IntStream.range(1, 10)
                 .boxed()
-                .map(i -> User.user().email("email" + i + "@email.com").firstName("firstname" + i).lastName("lastname" + i).build())
+                .map(i -> user()
+                        .email("email" + i + "@email.com")
+                        .firstName("firstname" + i)
+                        .lastName("lastname" + i)
+                        .enabled(random.nextBoolean())
+                        .build())
                 .collect(Collectors.toSet());
     }
 }

@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.javers.core.Javers;
 import org.javers.core.changelog.SimpleTextChangeLog;
 import org.javers.core.diff.Change;
-import org.javers.repository.jql.QueryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.hateoas.EntityLinks;
 import org.springframework.hateoas.ExposesResourceFor;
@@ -31,6 +30,7 @@ import java.util.stream.LongStream;
 import static fr.ramiere.spike.controller.SetupHAL.CURIE_NAMESPACE;
 import static fr.ramiere.spike.model.Subscription.SubscriptionState.active;
 import static fr.ramiere.spike.model.Subscription.SubscriptionState.deleted;
+import static org.javers.repository.jql.QueryBuilder.byInstance;
 import static org.springframework.http.ResponseEntity.notFound;
 import static org.springframework.http.ResponseEntity.ok;
 import static springfox.documentation.builders.PathSelectors.regex;
@@ -89,20 +89,12 @@ public class SubscriptionController {
 
     @GetMapping(path = AUDIT_PATH)
     public HttpEntity<List<Change>> audit(@PathVariable("id") Subscription subscription) {
-        return subscription == null ? notFound().build() : ok(changes(subscription));
+        return subscription == null ? notFound().build() : ok(javers.findChanges(byInstance(subscription).build()));
     }
 
     @GetMapping(path = CHANGES_PATH)
-    public HttpEntity<String> audit2(@PathVariable("id") Subscription subscription) {
-        if (subscription == null) {
-            return notFound().build();
-        }
-        String changes = javers.processChangeList(changes(subscription), new SimpleTextChangeLog());
-        return ok(changes);
-    }
-
-    private List<Change> changes(Subscription subscription) {
-        return javers.findChanges(QueryBuilder.byInstance(subscription).build());
+    public HttpEntity<String> changes(@PathVariable("id") Subscription subscription) {
+        return subscription == null ? notFound().build() : ok(javers.processChangeList(audit(subscription).getBody(), new SimpleTextChangeLog()));
     }
 
     @Component

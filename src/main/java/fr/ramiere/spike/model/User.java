@@ -12,11 +12,12 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Version;
+import javax.validation.constraints.NotNull;
 
 import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "user")
-@Builder(builderMethodName = "user")
+@Builder(builderMethodName = "user", toBuilder = true)
 @NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 public class User implements Identifiable<Long> {
@@ -30,6 +31,16 @@ public class User implements Identifiable<Long> {
     public final String lastName;
     @Email
     public final String email;
+    @NotNull
+    public final Boolean enabled;
     @Version
     private final Long version;
+
+    public User enable() {
+        return toBuilder().enabled(true).build();
+    }
+
+    public User disable() {
+        return toBuilder().enabled(false).build();
+    }
 }
