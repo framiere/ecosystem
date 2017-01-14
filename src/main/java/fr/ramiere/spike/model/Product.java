@@ -13,23 +13,24 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "product")
 @Builder(builderMethodName = "product")
-@NoArgsConstructor(access = PROTECTED)
+@NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 public class Product implements Identifiable<Long> {
     @Id
     @Getter
     @GeneratedValue
-    public Long id;
+    public final Long id;
     @Column(unique = true)
-    public String name;
-    public int version;
+    public final String name;
     @OneToMany(cascade = PERSIST)
     @Singular
-    public Set<Ecosystem> ecosystems;
+    public final Set<Ecosystem> ecosystems;
     @URL
     @NotEmpty
-    public String git_url;
+    public final String git_url;
     @NotEmpty
     @Column
-    public String git_branch;
+    public final String git_branch;
+    @Version
+    private final Long version;
 }

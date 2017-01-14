@@ -5,6 +5,7 @@ import fr.ramiere.spike.repository.SubscriptionRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.javers.core.Javers;
+import org.javers.core.changelog.SimpleTextChangeLog;
 import org.javers.core.diff.Change;
 import org.javers.repository.jql.QueryBuilder;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +14,6 @@ import org.springframework.hateoas.ExposesResourceFor;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +30,9 @@ import java.util.stream.LongStream;
 
 import static fr.ramiere.spike.controller.SetupHAL.CURIE_NAMESPACE;
 import static fr.ramiere.spike.model.Subscription.SubscriptionState.active;
-import static fr.ramiere.spike.model.Subscription.SubscriptionState.inactive;
+import static fr.ramiere.spike.model.Subscription.SubscriptionState.deleted;
+import static org.springframework.http.ResponseEntity.notFound;
+import static org.springframework.http.ResponseEntity.ok;
 import static springfox.documentation.builders.PathSelectors.regex;
 
 @RestController
@@ -50,6 +52,9 @@ public class SubscriptionController {
     private static final String AUDIT_PATH = "/audit";
     private static final String AUDIT_REL = CURIE_NAMESPACE + ":audit";
 
+    private static final String CHANGES_PATH = "/changes";
+    private static final String CHANGES_REL = CURIE_NAMESPACE + ":changes";
+
     @NonNull
     private final SubscriptionRepository subscriptionRepository;
     @NonNull
@@ -58,11 +63,11 @@ public class SubscriptionController {
     @GetMapping(path = CANCEL_PATH)
     public HttpEntity<?> cancel(@PathVariable("id") Subscription subscription) {
         if (subscription == null) {
-            return ResponseEntity.notFound().build();
+            return notFound().build();
         }
-        subscription.state = inactive;
-        subscriptionRepository.save(subscription);
-        return ResponseEntity.ok(subscription.name + " is now canceled");
+        Subscription disabled = subscription.disable();
+        subscriptionRepository.save(disabled);
+        return ok(disabled.name + " is now canceled");
     }
 
     @GetMapping(path = LOGS_PATH)
@@ -75,19 +80,29 @@ public class SubscriptionController {
 
     @GetMapping(path = DELETE_PATH)
     public HttpEntity<?> delete(@PathVariable("id") Subscription subscription) {
-        if (subscription == null) {
-            return ResponseEntity.notFound().build();
+        if (subscription == null || subscription.state == deleted) {
+            return notFound().build();
         }
         subscriptionRepository.delete(subscription.id);
-        return ResponseEntity.ok(subscription.name + " is deleted");
+        return ok(subscription.name + " is deleted");
     }
 
     @GetMapping(path = AUDIT_PATH)
     public HttpEntity<List<Change>> audit(@PathVariable("id") Subscription subscription) {
+        return subscription == null ? notFound().build() : ok(changes(subscription));
+    }
+
+    @GetMapping(path = CHANGES_PATH)
+    public HttpEntity<String> audit2(@PathVariable("id") Subscription subscription) {
         if (subscription == null) {
-            return ResponseEntity.notFound().build();
+            return notFound().build();
         }
-        return ResponseEntity.ok(javers.findChanges(QueryBuilder.byInstance(subscription).build()));
+        String changes = javers.processChangeList(changes(subscription), new SimpleTextChangeLog());
+        return ok(changes);
+    }
+
+    private List<Change> changes(Subscription subscription) {
+        return javers.findChanges(QueryBuilder.byInstance(subscription).build());
     }
 
     @Component
@@ -106,6 +121,7 @@ public class SubscriptionController {
             resource.add(entityLinks.linkForSingleResource(subscription).slash(DELETE_PATH).withRel(DELETE_REL));
             resource.add(entityLinks.linkForSingleResource(subscription).slash(LOGS_PATH).withRel(LOGS_REL));
             resource.add(entityLinks.linkForSingleResource(subscription).slash(AUDIT_PATH).withRel(AUDIT_REL));
+            resource.add(entityLinks.linkForSingleResource(subscription).slash(CHANGES_PATH).withRel(CHANGES_REL));
             return resource;
         }
     }

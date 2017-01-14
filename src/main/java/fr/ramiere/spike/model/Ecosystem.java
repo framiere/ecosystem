@@ -11,16 +11,18 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "ecosystem")
 @Builder(builderMethodName = "ecosystem")
-@NoArgsConstructor(access = PROTECTED)
+@NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 public class Ecosystem implements Identifiable<Long> {
     @Id
     @Getter
     @GeneratedValue
-    public Long id;
+    public final Long id;
     @Column(unique = true)
-    public String name;
+    public final String name;
     @OneToMany(cascade = PERSIST)
     @Singular
-    public Set<Team> teams;
+    public final Set<Team> teams;
+    @Version
+    private final Long version;
 }

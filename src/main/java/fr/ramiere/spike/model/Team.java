@@ -11,16 +11,18 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "team")
 @Builder(builderMethodName = "team")
-@NoArgsConstructor(access = PROTECTED)
+@NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 public class Team implements Identifiable<Long> {
     @Id
     @Getter
     @GeneratedValue
-    public Long id;
+    public final Long id;
     @Column(unique = true)
-    public String name;
+    public final String name;
     @OneToMany(cascade = PERSIST)
     @Singular
-    public Set<User> users;
+    public final Set<User> users;
+    @Version
+    private final Long version;
 }

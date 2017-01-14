@@ -11,22 +11,25 @@ import org.springframework.hateoas.Identifiable;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Version;
 
 import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "user")
 @Builder(builderMethodName = "user")
-@NoArgsConstructor(access = PROTECTED)
+@NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 public class User implements Identifiable<Long> {
     @Id
     @Getter
     @GeneratedValue
-    public Long id;
+    public final Long id;
     @NotEmpty
-    public String firstName;
+    public final String firstName;
     @NotEmpty
-    public String lastName;
+    public final String lastName;
     @Email
-    public String email;
+    public final String email;
+    @Version
+    private final Long version;
 }
