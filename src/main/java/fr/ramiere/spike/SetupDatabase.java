@@ -7,6 +7,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -36,7 +37,14 @@ public class SetupDatabase {
                 .team(team)
                 .build();
 
-        subscriptionRepository.save(activeSubscription);
+        Subscription inactiveSubscription = Subscription.subscription()
+                .name("inactive")
+                .state(Subscription.SubscriptionState.inactive)
+                .product(product)
+                .team(team)
+                .build();
+
+        subscriptionRepository.save(Arrays.asList(activeSubscription, inactiveSubscription));
     }
 
     private Set<User> users() {

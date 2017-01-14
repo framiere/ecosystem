@@ -1,9 +1,6 @@
 package fr.ramiere.spike.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.hateoas.Identifiable;
 
@@ -20,6 +17,7 @@ import static lombok.AccessLevel.PROTECTED;
 @Builder(builderMethodName = "subscription")
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor
+@ToString
 public class Subscription implements Identifiable<Long> {
     @Id
     @Getter
