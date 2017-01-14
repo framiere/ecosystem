@@ -1,11 +1,10 @@
 package fr.ramiere.spike.model;
 
 import lombok.*;
-import org.hibernate.validator.constraints.NotEmpty;
-import org.hibernate.validator.constraints.URL;
 import org.springframework.hateoas.Identifiable;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.Set;
 
 import static javax.persistence.CascadeType.PERSIST;
@@ -25,12 +24,8 @@ public class Product implements Identifiable<Long> {
     @OneToMany(cascade = PERSIST)
     @Singular
     public final Set<Ecosystem> ecosystems;
-    @URL
-    @NotEmpty
-    public final String git_url;
-    @NotEmpty
-    @Column
-    public final String git_branch;
+    @NotNull
+    private final Git git;
     @Version
     private final Long version;
 }

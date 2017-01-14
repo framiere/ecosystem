@@ -28,8 +28,7 @@ public class SetupDatabase {
         Product product = Product.builder()
                 .name("product")
                 .ecosystem(ecosystem)
-                .git_url("http://gitlab.com")
-                .git_branch("master")
+                .git(Git.builder().url("http://gitlab.com").branch("master").build())
                 .build();
 
         Subscription activeSubscription = Subscription.builder()
