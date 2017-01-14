@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.builders.ApiInfoBuilder;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
 import java.util.List;
@@ -30,6 +28,7 @@ import static org.javers.repository.jql.QueryBuilder.byInstance;
 import static org.springframework.http.ResponseEntity.notFound;
 import static org.springframework.http.ResponseEntity.ok;
 import static springfox.documentation.builders.PathSelectors.regex;
+import static springfox.documentation.spi.DocumentationType.SWAGGER_2;
 
 @RestController
 @RequestMapping("/users/{id}")
@@ -54,21 +53,13 @@ public class UserController {
     private final Javers javers;
 
     @GetMapping(path = ENABLE_PATH)
-    public HttpEntity enable(@PathVariable("id") User user) {
-        if (user == null) {
-            return notFound().build();
-        }
-        userRepository.save(user.enable());
-        return ok().build();
+    public HttpEntity<User> enable(@PathVariable("id") User user) {
+        return user == null ? notFound().build() : ok(userRepository.save(user.enable()));
     }
 
     @GetMapping(path = DISABLE_PATH)
     public HttpEntity disable(@PathVariable("id") User user) {
-        if (user == null) {
-            return notFound().build();
-        }
-        userRepository.save(user.disable());
-        return ok().build();
+        return user == null ? notFound().build() : ok(userRepository.save(user.disable()));
     }
 
     @GetMapping(path = AUDIT_PATH)
@@ -104,18 +95,15 @@ public class UserController {
 
     @Bean
     public Docket subscriptionApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
+        return new Docket(SWAGGER_2)
                 .groupName("user")
-                .apiInfo(apiInfo())
+                .apiInfo(new ApiInfoBuilder()
+                        .title("User")
+                        .version("2.0")
+                        .build())
                 .select()
                 .paths(regex("/user/.*"))
                 .build();
     }
 
-    private ApiInfo apiInfo() {
-        return new ApiInfoBuilder()
-                .title("User")
-                .version("2.0")
-                .build();
-    }
 }

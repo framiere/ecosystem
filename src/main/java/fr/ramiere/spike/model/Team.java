@@ -10,7 +10,7 @@ import static javax.persistence.CascadeType.PERSIST;
 import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "team")
-@Builder(builderMethodName = "team", toBuilder = true)
+@Builder
 @NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 public class Team implements Identifiable<Long> {

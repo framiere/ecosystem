@@ -11,7 +11,7 @@ import static javax.persistence.CascadeType.PERSIST;
 import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "subscription")
-@Builder(builderMethodName = "subscription", toBuilder = true)
+@Builder(toBuilder = true)
 @NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 @ToString

@@ -17,7 +17,7 @@ import javax.validation.constraints.NotNull;
 import static lombok.AccessLevel.PROTECTED;
 
 @Entity(name = "user")
-@Builder(builderMethodName = "user", toBuilder = true)
+@Builder(toBuilder = true)
 @NoArgsConstructor(access = PROTECTED, force = true)
 @AllArgsConstructor
 public class User implements Identifiable<Long> {

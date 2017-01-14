@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.builders.ApiInfoBuilder;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
 import java.util.List;
@@ -34,6 +32,7 @@ import static org.javers.repository.jql.QueryBuilder.byInstance;
 import static org.springframework.http.ResponseEntity.notFound;
 import static org.springframework.http.ResponseEntity.ok;
 import static springfox.documentation.builders.PathSelectors.regex;
+import static springfox.documentation.spi.DocumentationType.SWAGGER_2;
 
 @RestController
 @RequestMapping("/subscriptions/{id}")
@@ -61,13 +60,8 @@ public class SubscriptionController {
     private final Javers javers;
 
     @GetMapping(path = CANCEL_PATH)
-    public HttpEntity<?> cancel(@PathVariable("id") Subscription subscription) {
-        if (subscription == null) {
-            return notFound().build();
-        }
-        Subscription disabled = subscription.disable();
-        subscriptionRepository.save(disabled);
-        return ok(disabled.name + " is now canceled");
+    public HttpEntity<Subscription> cancel(@PathVariable("id") Subscription subscription) {
+        return subscription == null ? notFound().build() : ok(subscriptionRepository.save(subscription.disable()));
     }
 
     @GetMapping(path = LOGS_PATH)
@@ -120,18 +114,15 @@ public class SubscriptionController {
 
     @Bean
     public Docket subscriptionApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
+        return new Docket(SWAGGER_2)
                 .groupName("subscriptions")
-                .apiInfo(apiInfo())
+                .apiInfo(new ApiInfoBuilder()
+                        .title("Subscription")
+                        .version("2.0")
+                        .build())
                 .select()
                 .paths(regex("/subscriptions/.*"))
                 .build();
     }
 
-    private ApiInfo apiInfo() {
-        return new ApiInfoBuilder()
-                .title("Subscription")
-                .version("2.0")
-                .build();
-    }
 }
