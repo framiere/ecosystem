@@ -21,8 +21,13 @@ public class SubscriptionController {
     @NonNull
     private final EntityLinks entityLinks;
 
-    @RequestMapping(path = "receipt", method = GET)
-    HttpEntity<?> showReceipt(@PathVariable("id") String id) {
+    @RequestMapping(path = SubscriptionLinks.CANCEL_PATH, method = GET)
+    HttpEntity<?> cancel(@PathVariable("id") String id) {
         return ResponseEntity.notFound().header("message", "va chier").build();
+    }
+
+    @RequestMapping(path = SubscriptionLinks.LOGS_PATH, method = GET)
+    HttpEntity<?> logs(@PathVariable("id") String id) {
+        return ResponseEntity.ok("logs");
     }
 }

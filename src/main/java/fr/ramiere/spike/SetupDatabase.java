@@ -19,12 +19,24 @@ public class SetupDatabase {
     @EventListener
     public void init(ApplicationReadyEvent ready) {
         Team team = Team.team().name("team").users(users()).build();
+
         Ecosystem ecosystem = Ecosystem.ecosystem().name("eco").team(team).build();
-        Product product = Product.product().name("product").ecosystem(ecosystem).git_url("http://gitlab.com").git_branch("master").build();
-        Subscription subscription = Subscription.subscription().product(product).team(team).build();
 
-        subscriptionRepository.save(subscription);
+        Product product = Product.product()
+                .name("product")
+                .ecosystem(ecosystem)
+                .git_url("http://gitlab.com")
+                .git_branch("master")
+                .build();
 
+        Subscription activeSubscription = Subscription.subscription()
+                .name("active")
+                .state(Subscription.SubscriptionState.active)
+                .product(product)
+                .team(team)
+                .build();
+
+        subscriptionRepository.save(activeSubscription);
     }
 
     private Set<User> users() {
