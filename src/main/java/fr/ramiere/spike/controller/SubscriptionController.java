@@ -4,6 +4,7 @@ import fr.ramiere.spike.model.Subscription;
 import fr.ramiere.spike.repository.SubscriptionRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.hateoas.EntityLinks;
 import org.springframework.hateoas.ExposesResourceFor;
 import org.springframework.hateoas.Resource;
@@ -11,16 +12,24 @@ import org.springframework.hateoas.ResourceProcessor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.builders.ApiInfoBuilder;
+import springfox.documentation.service.ApiInfo;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spring.web.plugins.Docket;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static fr.ramiere.spike.controller.SetupHAL.CURIE_NAMESPACE;
 import static fr.ramiere.spike.model.Subscription.SubscriptionState.active;
 import static fr.ramiere.spike.model.Subscription.SubscriptionState.inactive;
+import static springfox.documentation.builders.PathSelectors.regex;
 
-@Controller
+@RestController
 @RequestMapping("/subscriptions/{id}")
 @ExposesResourceFor(Subscription.class)
 @RequiredArgsConstructor
@@ -48,8 +57,8 @@ public class SubscriptionController {
     }
 
     @GetMapping(path = LOGS_PATH)
-    public HttpEntity<?> logs(@PathVariable("id") Subscription subscription) {
-        return ResponseEntity.ok(subscription.toString());
+    public List<String> logs(@PathVariable("id") Subscription subscription) {
+        return Arrays.asList("a", "b", "c");
     }
 
     @GetMapping(path = DELETE_PATH)
@@ -78,5 +87,22 @@ public class SubscriptionController {
             resource.add(entityLinks.linkForSingleResource(subscription).slash(LOGS_PATH).withRel(LOGS_REL));
             return resource;
         }
+    }
+
+    @Bean
+    public Docket subscriptionApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("subscriptions")
+                .apiInfo(apiInfo())
+                .select()
+                .paths(regex("/subscriptions/.*"))
+                .build();
+    }
+
+    private ApiInfo apiInfo() {
+        return new ApiInfoBuilder()
+                .title("Subscription")
+                .version("2.0")
+                .build();
     }
 }
