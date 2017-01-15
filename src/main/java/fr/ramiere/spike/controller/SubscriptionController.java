@@ -1,9 +1,14 @@
 package fr.ramiere.spike.controller;
 
 import fr.ramiere.spike.model.Subscription;
+import fr.ramiere.spike.repository.ProductRepository;
 import fr.ramiere.spike.repository.SubscriptionRepository;
+import fr.ramiere.spike.repository.TeamRepository;
+import fr.ramiere.spike.repository.UserRepository;
+import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.javers.core.Javers;
 import org.javers.core.changelog.SimpleTextChangeLog;
 import org.javers.core.diff.Change;
@@ -14,13 +19,12 @@ import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.spring.web.plugins.Docket;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -35,7 +39,7 @@ import static springfox.documentation.builders.PathSelectors.regex;
 import static springfox.documentation.spi.DocumentationType.SWAGGER_2;
 
 @RestController
-@RequestMapping("/subscriptions/{id}")
+@RequestMapping("/subscriptions")
 @ExposesResourceFor(Subscription.class)
 @RequiredArgsConstructor
 public class SubscriptionController {
@@ -57,14 +61,46 @@ public class SubscriptionController {
     @NonNull
     private final SubscriptionRepository subscriptionRepository;
     @NonNull
+    private final ProductRepository productRepository;
+    @NonNull
+    private final TeamRepository teamRepository;
+    @NonNull
+    private final UserRepository userRepository;
+    @NonNull
     private final Javers javers;
+    @NonNull
+    private final SubscriptionResourceProcessor subscriptionResourceProcessor;
 
-    @GetMapping(path = CANCEL_PATH)
-    public HttpEntity<Subscription> cancel(@PathVariable("id") Subscription subscription) {
-        return subscription == null ? notFound().build() : ok(subscriptionRepository.save(subscription.disable()));
+    @Data
+    public static class SubscriptionForm {
+        @NotEmpty
+        public final String name;
+        @NotNull
+        public final Long productId;
+        @NotNull
+        public final Long teamId;
+        @NotNull
+        public final Long userId;
     }
 
-    @GetMapping(path = LOGS_PATH)
+    @PostMapping(path = "/")
+    public HttpEntity<Resource<Subscription>> create(@Valid @RequestBody(required = true) SubscriptionForm subscriptionForm) {
+        Subscription subscription = Subscription.builder()
+                .name(subscriptionForm.name)
+                .product(productRepository.findOne(subscriptionForm.productId))
+                .team(teamRepository.findOne(subscriptionForm.teamId))
+                .user(userRepository.findOne(subscriptionForm.userId))
+                .state(active)
+                .build();
+        return ok(subscriptionResourceProcessor.process(new Resource<>(subscriptionRepository.save(subscription))));
+    }
+
+    @GetMapping(path = "/{id}/" + CANCEL_PATH)
+    public HttpEntity<Resource<Subscription>> cancel(@PathVariable("id") Subscription subscription) {
+        return subscription == null ? notFound().build() : ok(subscriptionResourceProcessor.process(new Resource<>(subscriptionRepository.save(subscription.disable()))));
+    }
+
+    @GetMapping(path = "/{id}/" + LOGS_PATH)
     public List<String> logs(@PathVariable("id") Subscription subscription) {
         return LongStream.rangeClosed(1, 10)
                 .boxed()
@@ -72,7 +108,7 @@ public class SubscriptionController {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping(path = DELETE_PATH)
+    @GetMapping(path = "/{id}/" + DELETE_PATH)
     public HttpEntity<?> delete(@PathVariable("id") Subscription subscription) {
         if (subscription == null || subscription.state == deleted) {
             return notFound().build();
@@ -81,14 +117,19 @@ public class SubscriptionController {
         return ok(subscription.name + " is deleted");
     }
 
-    @GetMapping(path = AUDIT_PATH)
+    @GetMapping(path = "/{id}/" + AUDIT_PATH)
     public HttpEntity<List<Change>> audit(@PathVariable("id") Subscription subscription) {
         return subscription == null ? notFound().build() : ok(javers.findChanges(byInstance(subscription).build()));
     }
 
-    @GetMapping(path = CHANGES_PATH)
+    @GetMapping(path = "/{id}/" + CHANGES_PATH)
     public HttpEntity<String> changes(@PathVariable("id") Subscription subscription) {
         return subscription == null ? notFound().build() : ok(javers.processChangeList(audit(subscription).getBody(), new SimpleTextChangeLog()));
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public String onRuntimeException(RuntimeException e) {
+        return e.getMessage();
     }
 
     @Component
@@ -113,7 +154,7 @@ public class SubscriptionController {
     }
 
     @Bean
-    public Docket subscriptionApi() {
+    public Docket subscriptionsApi() {
         return new Docket(SWAGGER_2)
                 .groupName("subscriptions")
                 .apiInfo(new ApiInfoBuilder()
@@ -124,5 +165,4 @@ public class SubscriptionController {
                 .paths(regex("/subscriptions/.*"))
                 .build();
     }
-
 }

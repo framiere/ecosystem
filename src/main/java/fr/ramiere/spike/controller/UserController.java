@@ -14,13 +14,11 @@ import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.spring.web.plugins.Docket;
 
+import javax.validation.Valid;
 import java.util.List;
 
 import static fr.ramiere.spike.controller.SetupHAL.CURIE_NAMESPACE;
@@ -31,7 +29,7 @@ import static springfox.documentation.builders.PathSelectors.regex;
 import static springfox.documentation.spi.DocumentationType.SWAGGER_2;
 
 @RestController
-@RequestMapping("/users/{id}")
+@RequestMapping("/users")
 @ExposesResourceFor(User.class)
 @RequiredArgsConstructor
 public class UserController {
@@ -52,22 +50,27 @@ public class UserController {
     @NonNull
     private final Javers javers;
 
-    @GetMapping(path = ENABLE_PATH)
+    @PostMapping(path = "/")
+    public HttpEntity<User> create(@Valid @RequestBody User user) {
+        return ok(userRepository.save(user.toBuilder().id(null).build()));
+    }
+
+    @GetMapping(path = "/{id}/" + ENABLE_PATH)
     public HttpEntity<User> enable(@PathVariable("id") User user) {
         return user == null ? notFound().build() : ok(userRepository.save(user.enable()));
     }
 
-    @GetMapping(path = DISABLE_PATH)
+    @GetMapping(path = "/{id}/" + DISABLE_PATH)
     public HttpEntity disable(@PathVariable("id") User user) {
         return user == null ? notFound().build() : ok(userRepository.save(user.disable()));
     }
 
-    @GetMapping(path = AUDIT_PATH)
+    @GetMapping(path = "/{id}/" + AUDIT_PATH)
     public HttpEntity<List<Change>> audit(@PathVariable("id") User user) {
         return user == null ? notFound().build() : ok(javers.findChanges(byInstance(user).build()));
     }
 
-    @GetMapping(path = CHANGES_PATH)
+    @GetMapping(path = "/{id}/" + CHANGES_PATH)
     public HttpEntity<String> changes(@PathVariable("id") User user) {
         return user == null ? notFound().build() : ok(javers.processChangeList(audit(user).getBody(), new SimpleTextChangeLog()));
     }
@@ -94,7 +97,7 @@ public class UserController {
     }
 
     @Bean
-    public Docket userApi() {
+    public Docket usersApi() {
         return new Docket(SWAGGER_2)
                 .groupName("users")
                 .apiInfo(new ApiInfoBuilder()
